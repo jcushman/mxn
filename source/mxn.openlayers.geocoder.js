@@ -13,6 +13,14 @@ Geocoder: {
 			address.address = [ address.street, address.locality, address.region, address.country ].join(', ');
 		}
 		
+		var handle_response = function(response){
+			if(response.status == 503){ // Service Temporarily Unavailable
+				me.error_callback("OpenLayers geocoding is temporarily unavailable (were you blocked for excessive use?)");
+			}else{
+				me.geocode_callback(JSON.parse(response.responseText), response.status);
+			}
+		};
+		
 		if (address.hasOwnProperty('lat') && address.hasOwnProperty('lon')) {
 			var latlon = address.toProprietary(this.api);
 			OpenLayers.Request.GET({
@@ -23,9 +31,10 @@ Geocoder: {
 					'addressdetails': 1,
 					'format': 'json'
 				},
-				callback: function(request) { me.geocode_callback(JSON.parse(request.responseText), request.status); }
+				callback: handle_response
 			});
 		} else {
+			console.log("getting", 'http://nominatim.openstreetmap.org/search?q='+address.address+'&addressdetails=1&format=json'); 
 			OpenLayers.Request.GET({
 				url: 'http://nominatim.openstreetmap.org/search',
 				params: {
@@ -33,7 +42,7 @@ Geocoder: {
 					'addressdetails': 1,
 					'format': 'json'
 				},
-				callback: function(request) { me.geocode_callback(JSON.parse(request.responseText), request.status); }
+				callback: handle_response
 			});
 		}
 	},
